@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Handwritten Text Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #content {
+            text-align: center;
+        }
+
+        h1 {
+            color: #007BFF;
+        }
+
+        #recognizedText {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+
+        #uploadedImage {
+            max-width: 100%;
+            margin-top: 20px;
+            display: none;
+        }
+
+        #imageUpload {
+            display: none;
+        }
+
+        #dropZone {
+            border: 2px dashed #007BFF;
+            padding: 20px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .custom-button {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #imageUploadLabel {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        #imageUploadLabel:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <h1>Handwritten Text Recognition</h1>
+        <label for="imageUpload" id="imageUploadLabel" class="custom-button">Upload an Image</label>
+        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+        <div id="recognizedText"></div>
+        <img id="uploadedImage">
+        <div id="dropZone">Drag and drop an image here</div>
+    </div>
+
+    <script>
+        const recognizedText = document.getElementById('recognizedText');
+        const imageUpload = document.getElementById('imageUpload');
+        const uploadedImage = document.getElementById('uploadedImage');
+        const dropZone = document.getElementById('dropZone');
+
+        // Allow users to drag and drop an image onto the drop zone
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.border = '2px dashed #0056b3';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.border = '2px dashed #007BFF';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.border = '2px dashed #007BFF';
+            const file = e.dataTransfer.files[0];
+            handleImageUpload(file);
+        });
+
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            handleImageUpload(file);
+        });
+
+        function handleImageUpload(file) {
+            const reader = new FileReader();
+
+            reader.onload = async function() {
+                const userImage = reader.result;
+                uploadedImage.src = userImage; // Set the source of the image
+                uploadedImage.style.display = 'block'; // Make the image visible
+                const recognized = await recognizeHandwrittenText(userImage);
+                recognizedText.textContent = recognized;
+            };
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function recognizeHandwrittenText(imageData) {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/recognize_text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ image: imageData }),
+                });
+                const result = await response.json();
+                return result.recognizedText;
+            } catch (error) {
+                console.error('Error:', error);
+                return 'Recognition Failed';
+            }
+        }
+    </script>
+</body>
+</html>
